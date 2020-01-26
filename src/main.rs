@@ -1,9 +1,9 @@
-use options_pricing::{european, assets::{Option, Derivative}};
+use options_pricing::{european, assets::{European, Asset, Vanilla}};
 
 
 fn main() {
-    let deriv_ex = Derivative::from_data(50.,0.5, 0.1, 0.05);
-    let example = Option::EuropeanCall(deriv_ex);
-    let values = european::explicit_fwd(example);
+    let deriv_ex = European::new(60., true);
+    let underlying = Asset {vol: 0.2, rate:0.05};
+    let values = european::explicit_fwd(deriv_ex, underlying, 0.5);
     println!("{}", values[5]);
 }
