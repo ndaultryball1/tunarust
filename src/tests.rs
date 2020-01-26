@@ -1,5 +1,6 @@
 use crate::assets::{European, Asset, Vanilla};
 use statrs;
+use crate::explicit::price;
 
 #[test]
 fn put_call_parity(){
@@ -7,10 +8,10 @@ fn put_call_parity(){
 
     let spot: f64 = 60.;
     let remaining: f64 = 0.5;
-    let strike:f64 = 50.;
     let underlying = Asset {vol: 0.2, rate:0.05};
-    let test_call = European::new(50., true);
-    let test_put = European::new(50., false);
+    let strike = 50.;
+    let test_call = European::new(strike, true);
+    let test_put = European::new(strike, false);
 
     let call_price = test_call.exact_solution(&underlying, spot, remaining);
     let put_price = test_put.exact_solution(&underlying, spot, remaining);
@@ -20,3 +21,14 @@ fn put_call_parity(){
 }
 
 #[test]
+fn explicit_fwd(){
+    // Test of the result of the explicit fwd difference scheme
+    let test_call = European::new(50., true);
+    let underlying = Asset {vol: 0.2, rate:0.05};
+    let remaining = 0.5;
+    let spot = 60.;
+    let result = price(test_call, &underlying, remaining, spot);
+    let exact = test_call.exact_solution(&underlying, spot, remaining);
+
+    statrs::assert_almost_eq!(result, exact, 5.);
+}
