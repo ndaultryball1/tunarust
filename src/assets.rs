@@ -24,9 +24,9 @@ impl European {
     pub fn exact_solution(&self, underlying: &Asset, price:f64, time_remaining:f64) -> f64 {
         let dist = Normal::new(0.0, 1.0).unwrap();
 
-        let d1: f64 = self.sign *((price / self.strike).ln()  + (underlying.rate + sqr(underlying.vol))*time_remaining) / (underlying.vol * time_remaining.sqrt());
-        let d2: f64 = self.sign * (d1 - (underlying.vol*time_remaining.sqrt()));
-        self.sign * (price*dist.cdf(d1) - self.strike*(-1. * underlying.rate * time_remaining).exp()*dist.cdf(d2))
+        let d1: f64 = ((price / self.strike).ln()  + (underlying.rate + 0.5*sqr(underlying.vol))*time_remaining) / (underlying.vol * time_remaining.sqrt());
+        let d2: f64 = d1 - (underlying.vol*time_remaining.sqrt());
+        self.sign * (price*dist.cdf(self.sign * d1) - self.strike*(-1. * underlying.rate * time_remaining).exp()*dist.cdf(self.sign * d2))
     }
 }
 
