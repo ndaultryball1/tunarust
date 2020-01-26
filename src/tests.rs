@@ -18,3 +18,5 @@ fn put_call_parity(){
 
     statrs::assert_almost_eq!(put_price + spot - call_price, discounted_strike, 1.);
 }
+
+#[test]

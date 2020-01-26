@@ -1,18 +1,18 @@
+// This module implements explicit finite difference methods
+// Plan - generalise to non-european options.
+use crate::assets::{Discretisable,Asset, Vanilla, European};
 
-use crate::assets::{Discretisable,Asset};
-
-const DX: f64 = 0.01;
-const M: i32 = 100;
-const MINUS: i32 = -500;
-const PLUS: i32 = 500;
+const DX: f64 = 0.01;  // Size of spatial increment
+const M: i32 = 100;  // Number of timesteps to divide the interval
+const MINUS: i32 = -1000;  // Lower bound for x (log moneynness)
+const PLUS: i32 = 1000;
 const NUMX: usize = (-MINUS + PLUS) as usize + 1;
 
-pub fn explicit_fwd<T: Discretisable>(to_price: T, underlying: Asset, time_remaining: f64) -> [f64; NUMX] {
+fn explicit_fwd<T: Vanilla + Discretisable>(to_price: T, underlying: &Asset, time_remaining: f64) -> [f64; NUMX] {
     // Implements explicit forward difference scheme
     // to solve transformed BS equation.
-
     let dt =
-        0.5 * underlying.vol * time_remaining / M as f64;
+        to_price.dimless_time(&underlying, time_remaining) / M as f64;
     let alpha = dt / (DX * DX);
 
     let mut oldu = [0.; NUMX];
@@ -31,9 +31,21 @@ pub fn explicit_fwd<T: Discretisable>(to_price: T, underlying: Asset, time_remai
         for n in 1..NUMX - 1 {
             newu[n] = oldu[n] + alpha * (oldu[n - 1] - 2.0 * oldu[n] + oldu[n + 1]);
         } // This is the explicit increment
-        for n in 0..NUMX {
-            oldu[n] = newu[n];
-        }
+        // for n in 0..NUMX {
+        //     oldu[n] = newu[n];
+        // }
+        oldu = newu;
     }
     oldu
+}
+fn spot_to_array_loc(log_moneyness:f64) -> usize {
+    // Function to convert a log_moneyness at which the option price is desired, to an array location
+    (log_moneyness/DX).round() as usize
+}
+
+pub fn price(to_price:European, underlying: &Asset, time_remaining: f64, spot:f64) -> f64 {
+    //First generate the result array from the explicit fwd difference
+    let results = explicit_fwd(to_price, &underlying, time_remaining);
+    let loc = spot_to_array_loc(to_price.log_moneyness(spot));
+    to_price.u_to_value(&underlying, time_remaining, spot, results[loc])
 }
