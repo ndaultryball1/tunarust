@@ -17,7 +17,7 @@ impl European {
     // Functions to extract the two dimensionless parameters of the pricing problem
 
     pub fn dimless_k(&self, underlying:&Asset) -> f64 {
-        underlying.rate / (0.5 * underlying.vol * underlying.vol)
+        underlying.rate / (0.5 * sqr(underlying.vol))
     }
     pub fn exact_solution(&self, underlying: &Asset, price:f64, time_remaining:f64) -> f64 {
         let dist = Normal::new(0.0, 1.0).unwrap();
@@ -67,9 +67,9 @@ impl Vanilla for European {
 }
 impl Discretisable for European {
     fn boundary_t0(&self, underlying: &Asset, x: f64) -> f64 {
-        ((self.sign * 0.5 * (self.dimless_k(&underlying) + 1.) * x).exp()
-            - self.sign * (0.5 * (self.dimless_k(&underlying) - 1.) * x).exp())
-        .max(0.)
+        (self.sign * (-0.5 * (self.dimless_k(&underlying) - 1.)* x ).exp()*
+            (x.exp() - 1.))
+                .max(0.)
         }
 
     fn boundary_spatial(&self, underlying:&Asset,x: f64, tau: f64) -> f64 {

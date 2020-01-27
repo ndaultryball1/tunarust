@@ -3,10 +3,10 @@
 use crate::assets::{Discretisable,Asset, Vanilla, European};
 
 const DX: f64 = 0.01;  // Size of spatial increment
-const M: i32 = 100;  // Number of timesteps to divide the interval
-const MINUS: i32 = -1000;  // Lower bound for x (log moneynness)
+const M: i32 = 300;  // Number of timesteps to divide the interval
+const MINUS: i32 = 1000;  // Lower bound for x (log moneynness)
 const PLUS: i32 = 1000;
-const NUMX: usize = (-MINUS + PLUS) as usize + 1;
+const NUMX: usize = (MINUS + PLUS) as usize + 1;
 
 fn explicit_fwd<T: Vanilla + Discretisable>(to_price: T, underlying: &Asset, time_remaining: f64) -> [f64; NUMX] {
     // Implements explicit forward difference scheme
@@ -14,18 +14,19 @@ fn explicit_fwd<T: Vanilla + Discretisable>(to_price: T, underlying: &Asset, tim
     let dt =
         to_price.dimless_time(&underlying, time_remaining) / M as f64;
     let alpha = dt / (DX * DX);
+    println!("{}", alpha);
 
     let mut oldu = [0.; NUMX];
     let mut newu = [0.; NUMX];
 
     for i in 0..NUMX {
-        oldu[i] = to_price.boundary_t0(&underlying, i as f64 * DX);
+        oldu[i] = to_price.boundary_t0(&underlying, (i as i32 - MINUS) as f64 * DX);
     }
 
     for j in 1..M {
         let tau = j as f64 * dt;
 
-        newu[0] = to_price.boundary_spatial( &underlying, MINUS as f64 * DX, tau);
+        newu[0] = to_price.boundary_spatial( &underlying, MINUS as f64 * DX * -1., tau);
         newu[NUMX - 1] = to_price.boundary_spatial(&underlying, PLUS as f64 * DX, tau);
 
         for n in 1..NUMX - 1 {
