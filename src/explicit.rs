@@ -14,7 +14,10 @@ fn explicit_fwd<T: Vanilla + Discretisable>(to_price: T, underlying: &Asset, tim
     let dt =
         to_price.dimless_time(&underlying, time_remaining) / M as f64;
     let alpha = dt / (DX * DX);
-    println!("{}", alpha);
+    println!("Alpha for the problem is {}", alpha);
+    if alpha>0.5 {
+        println!("Solver is unstable for alpha > 0.5. Please increase time precision.");
+    }
 
     let mut oldu = [0.; NUMX];
     let mut newu = [0.; NUMX];
@@ -26,15 +29,12 @@ fn explicit_fwd<T: Vanilla + Discretisable>(to_price: T, underlying: &Asset, tim
     for j in 1..M {
         let tau = j as f64 * dt;
 
-        newu[0] = to_price.boundary_spatial( &underlying, MINUS as f64 * DX * -1., tau);
+        newu[0] = to_price.boundary_spatial(&underlying, MINUS as f64 * DX * -1., tau);
         newu[NUMX - 1] = to_price.boundary_spatial(&underlying, PLUS as f64 * DX, tau);
 
         for n in 1..NUMX - 1 {
             newu[n] = oldu[n] + alpha * (oldu[n - 1] - 2.0 * oldu[n] + oldu[n + 1]);
-        } // This is the explicit increment
-        // for n in 0..NUMX {
-        //     oldu[n] = newu[n];
-        // }
+        }
         oldu = newu;
     }
     oldu

@@ -50,15 +50,14 @@ pub trait Discretisable {
     //relevant to the problem i.e heat equation formulation
     fn u_to_value(&self, underlying: &Asset, u:f64, time_remaining:f64, spot:f64) -> f64;
         // Implement this to convert from the results of the finite-difference scheme
-        // back to value of the option. Default is that the difference scheme is in price already
+        // back to value of the option.
 }
 impl Vanilla for European {
     fn payoff(&self, spot: f64) -> f64 {
         (self.sign * (spot - self.strike)).max(0.)
     }
     fn new(strike: f64, call: bool) -> European {
-        // Generic creator for one off option without asset.
-        // Also gets around non-obvious code of sign/type
+        // Gets around non-obvious code of sign/type
         European {
             strike: strike,
             sign: if call {1.} else {-1.},
@@ -67,15 +66,17 @@ impl Vanilla for European {
 }
 impl Discretisable for European {
     fn boundary_t0(&self, underlying: &Asset, x: f64) -> f64 {
-        (self.sign * (-0.5 * (self.dimless_k(&underlying) - 1.)* x ).exp()*
-            (x.exp() - 1.))
+        (self.sign * (
+            (0.5 * (self.dimless_k(&underlying) +1.)*x).exp()
+            - (0.5 * (self.dimless_k(&underlying) - 1.)*x).exp()
+        ))
                 .max(0.)
         }
 
     fn boundary_spatial(&self, underlying:&Asset,x: f64, tau: f64) -> f64 {
-        self.strike
-            * (0.5 * (self.dimless_k(&underlying) + 1.) * x
-                + 0.25 * (self.dimless_k(&underlying) + 1.) * (self.dimless_k(&underlying) + 1.) * tau)
+
+            (0.5 * (self.dimless_k(&underlying) + 1.) * x
+                + 0.25 * sqr(self.dimless_k(&underlying) + 1.)  * tau).exp()
     }
 
     fn u_to_value(&self, underlying:&Asset, time_remaining:f64, spot:f64, u:f64) -> f64 {
