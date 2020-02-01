@@ -44,7 +44,8 @@ pub trait Vanilla {
 pub trait Discretisable {
     // Implement this to provide boundary conditions for a finite difference scheme
     // Ideally this would be linked to the payoff function in some way
-    fn boundary_spatial(&self, underlying: &Asset, price:f64, time_remaining:f64) -> f64;
+    fn boundary_spatial_p(&self, underlying: &Asset, price:f64, time_remaining:f64) -> f64;
+    fn boundary_spatial_m(&self, underlying: &Asset, price:f64, time_remaining:f64) -> f64;
     fn boundary_t0(&self, underlying: &Asset, price:f64) -> f64;
     // Boundary condition in the variables
     //relevant to the problem i.e heat equation formulation
@@ -73,11 +74,23 @@ impl Discretisable for European {
                 .max(0.)
         }
 
-    fn boundary_spatial(&self, underlying:&Asset,x: f64, tau: f64) -> f64 {
-
-            (0.5 * (self.dimless_k(&underlying) + 1.) * x
-                + 0.25 * sqr(self.dimless_k(&underlying) + 1.)  * tau).exp()
+    fn boundary_spatial_p(&self, underlying:&Asset,x: f64, tau: f64) -> f64 {
+        match self.sign {
+            1. => (0.5 * (self.dimless_k(&underlying) + 1.) * x
+                + 0.25 * sqr(self.dimless_k(&underlying) + 1.)  * tau).exp(),
+            -1. => 0.,
+            _ => panic!("Invalid option! Sign must be either +-1."),
+            }
+        }
+    fn boundary_spatial_m(&self, underlying: &Asset, x:f64, tau:f64) -> f64 {
+        // Boundary condition at log_moneyness of -inf, or price of 0.
+        match self.sign {
+            1. => 0.,
+            -1. => ((0.25 * sqr(self.dimless_k(&underlying) + 1.) + self.dimless_k(&underlying) )* tau + 0.5 * (self.dimless_k(&underlying) -1.) * x).exp(),
+            _ => panic!("Invalid option! Sign must be either +-1."),
+        }
     }
+
 
     fn u_to_value(&self, underlying:&Asset, time_remaining:f64, spot:f64, u:f64) -> f64 {
         // Given a u-value read from the result array of finite difference, returns the corresponding option value

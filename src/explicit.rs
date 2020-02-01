@@ -29,8 +29,8 @@ fn explicit_fwd<T: Vanilla + Discretisable>(to_price: T, underlying: &Asset, tim
     for j in 1..M {
         let tau = j as f64 * dt;
 
-        newu[0] = to_price.boundary_spatial(&underlying, MINUS as f64 * DX * -1., tau);
-        newu[NUMX - 1] = to_price.boundary_spatial(&underlying, PLUS as f64 * DX, tau);
+        newu[0] = to_price.boundary_spatial_m(&underlying, MINUS as f64 * DX * -1., tau);
+        newu[NUMX - 1] = to_price.boundary_spatial_p(&underlying, PLUS as f64 * DX, tau);
 
         for n in 1..NUMX - 1 {
             newu[n] = oldu[n] + alpha * (oldu[n - 1] - 2.0 * oldu[n] + oldu[n + 1]);

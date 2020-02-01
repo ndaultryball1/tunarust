@@ -24,13 +24,18 @@ fn exact_put_call_parity(){
 fn explicit_fwd_value(){
     // Test of the result of the explicit fwd difference scheme
     let test_call = European::new(50., true);
+    let test_put = European::new(50., false);
     let underlying = Asset {vol: 0.2, rate:0.05};
     let remaining = 0.5;
     let spot = 60.;
-    let result = price(test_call, &underlying, remaining, spot);
-    let exact = test_call.exact_solution(&underlying, spot, remaining);
 
-    statrs::assert_almost_eq!(result, exact, 5.);
+    let result_call = price(test_call, &underlying, remaining, spot);
+    let result_put = price(test_put, &underlying, remaining, spot);
+    let exact_call = test_call.exact_solution(&underlying, spot, remaining);
+    let exact_put = test_put.exact_solution(&underlying, spot, remaining);
+
+    statrs::assert_almost_eq!(result_put, exact_put, 1.);
+    statrs::assert_almost_eq!(result_call, exact_call, 1.);
 }
 
 #[test]
@@ -39,8 +44,9 @@ fn boundaries_t0(){
     let test_call = European::new(50., true);
     let underlying = Asset {vol: 0.2, rate:0.05};
     let remaining = 0.5;
-    let bm_min = test_call.boundary_spatial(&underlying, -10., 0.);
-    let bm_plus = test_call.boundary_spatial(&underlying, 10., 0.);
+
+    let bm_min = test_call.boundary_spatial_m(&underlying, -10., 0.);
+    let bm_plus = test_call.boundary_spatial_p(&underlying, 10., 0.);
     let t0_min = test_call.boundary_t0(&underlying, -10.);
     let t0_plus = test_call.boundary_t0(&underlying, 10.);
 
