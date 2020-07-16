@@ -33,7 +33,7 @@ fn explicit_fwd_value() {
         rate: 0.05,
     };
     let remaining = 0.5;
-    let spot = 60.;
+    let spot = 70.;
 
     let result_call = price(test_call, &underlying, remaining, spot);
     let result_put = price(test_put, &underlying, remaining, spot);
@@ -60,7 +60,7 @@ fn boundaries_t0() {
     let t0_min = test_call.boundary_t0(&underlying, -10.);
     let t0_plus = test_call.boundary_t0(&underlying, 10.);
 
-    println!("bm_min is {:?}, t0_min is {:?}", bm_min, t0_min);
-    statrs::assert_almost_eq!(bm_min, t0_min, 0.001);
-    statrs::assert_almost_eq!(bm_plus, t0_plus, 0.001);
+    assert_eq!(bm_min, 0.);
+    assert_eq!(t0_min, 0.);
+    statrs::assert_almost_eq!(bm_plus, t0_plus, 0.001 * bm_plus);
 }

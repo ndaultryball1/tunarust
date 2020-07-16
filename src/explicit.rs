@@ -50,7 +50,7 @@ fn explicit_fwd<T: Vanilla + Discretisable>(
 }
 fn spot_to_array_loc(log_moneyness: f64) -> usize {
     // Function to convert a log_moneyness at which the option price is desired, to an array location
-    (log_moneyness / DX).round() as usize
+    ((log_moneyness - MINUS as f64* DX) / DX) as usize 
 }
 
 pub fn price(to_price: European, underlying: &Asset, time_remaining: f64, spot: f64) -> f64 {
@@ -58,4 +58,13 @@ pub fn price(to_price: European, underlying: &Asset, time_remaining: f64, spot: 
     let results = explicit_fwd(to_price, &underlying, time_remaining);
     let loc = spot_to_array_loc(to_price.log_moneyness(spot));
     to_price.u_to_value(&underlying, time_remaining, spot, results[loc])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_spot_to_array_loc() {
+        assert_eq!(spot_to_array_loc(0.), 1000)
+    }
 }

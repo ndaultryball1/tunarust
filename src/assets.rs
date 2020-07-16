@@ -95,11 +95,9 @@ impl Discretisable for European {
         // Boundary condition at log_moneyness of -inf, or price of 0.
         match self.side {
             Side::Call => 0.,
-            Side::Put => {
-                ((0.25 * sqr(self.dimless_k(&underlying) + 1.) + self.dimless_k(&underlying)) * tau
-                    + 0.5 * (self.dimless_k(&underlying) - 1.) * x)
-                    .exp()
-            }
+            Side::Put => (0.5 * (self.dimless_k(&underlying) + 1.) * x
+            + 0.25 * sqr(self.dimless_k(&underlying) + 1.) * tau)
+            .exp(),
         }
     }
 
