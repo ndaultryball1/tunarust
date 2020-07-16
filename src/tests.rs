@@ -1,4 +1,4 @@
-use crate::assets::{European, Asset, Vanilla, Discretisable};
+use crate::assets::{European, Asset, Vanilla, Discretisable, Side};
 use statrs;
 use crate::explicit::price;
 
@@ -10,8 +10,8 @@ fn exact_put_call_parity(){
     let remaining: f64 = 0.5;
     let underlying = Asset {vol: 0.2, rate:0.05};
     let strike = 50.;
-    let test_call = European::new(strike, true);
-    let test_put = European::new(strike, false);
+    let test_call = European::new(strike, Side::Call);
+    let test_put = European::new(strike, Side::Put);
 
     let call_price = test_call.exact_solution(&underlying, spot, remaining);
     let put_price = test_put.exact_solution(&underlying, spot, remaining);
@@ -23,8 +23,8 @@ fn exact_put_call_parity(){
 #[test]
 fn explicit_fwd_value(){
     // Test of the result of the explicit fwd difference scheme
-    let test_call = European::new(50., true);
-    let test_put = European::new(50., false);
+    let test_call = European::new(50., Side::Call);
+    let test_put = European::new(50., Side::Put);
     let underlying = Asset {vol: 0.2, rate:0.05};
     let remaining = 0.5;
     let spot = 60.;
@@ -41,9 +41,9 @@ fn explicit_fwd_value(){
 #[test]
 fn boundaries_t0(){
     // Test the spatial bcs agree with time bc at tau = 0
-    let test_call = European::new(50., true);
+    let test_call = European::new(50., Side::Call);
     let underlying = Asset {vol: 0.2, rate:0.05};
-    let remaining = 0.5;
+    let _remaining = 0.5;
 
     let bm_min = test_call.boundary_spatial_m(&underlying, -10., 0.);
     let bm_plus = test_call.boundary_spatial_p(&underlying, 10., 0.);

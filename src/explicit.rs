@@ -8,7 +8,7 @@ const MINUS: i32 = 1000;  // Lower bound for x (log moneynness)
 const PLUS: i32 = 1000;
 const NUMX: usize = (MINUS + PLUS) as usize + 1;
 
-fn explicit_fwd<T: Vanilla + Discretisable>(to_price: T, underlying: &Asset, time_remaining: f64) -> [f64; NUMX] {
+fn explicit_fwd<T: Vanilla + Discretisable>(to_price: T, underlying: &Asset, time_remaining: f64) -> Vec<f64> {
     // Implements explicit forward difference scheme
     // to solve transformed BS equation.
     let dt =
@@ -19,23 +19,23 @@ fn explicit_fwd<T: Vanilla + Discretisable>(to_price: T, underlying: &Asset, tim
         println!("Solver is unstable for alpha > 0.5. Please increase time precision.");
     }
 
-    let mut oldu = [0.; NUMX];
-    let mut newu = [0.; NUMX];
+    let mut oldu = vec![0.; NUMX];
+    let mut newu = vec![0.; NUMX];
 
-    for i in 0..NUMX {
-        oldu[i] = to_price.boundary_t0(&underlying, (i as i32 - MINUS) as f64 * DX);
+    for (i, loc) in oldu.iter_mut().enumerate() {
+        *loc = to_price.boundary_t0(&underlying, (i as i32 - MINUS) as f64 * DX);
     }
 
     for j in 1..M {
         let tau = j as f64 * dt;
 
-        newu[0] = to_price.boundary_spatial_m(&underlying, MINUS as f64 * DX * -1., tau);
-        newu[NUMX - 1] = to_price.boundary_spatial_p(&underlying, PLUS as f64 * DX, tau);
+        *newu.first_mut().unwrap() = to_price.boundary_spatial_m(&underlying, MINUS as f64 * DX * -1., tau);
+        *newu.last_mut().unwrap() = to_price.boundary_spatial_p(&underlying, PLUS as f64 * DX, tau);
 
-        for n in 1..NUMX - 1 {
-            newu[n] = oldu[n] + alpha * (oldu[n - 1] - 2.0 * oldu[n] + oldu[n + 1]);
+        for (n, loc) in newu.iter_mut().enumerate() {
+            *loc = oldu[n] + alpha * (oldu[n - 1] - 2.0 * oldu[n] + oldu[n + 1]);
         }
-        oldu = newu;
+        oldu = newu.as_mut_slice().to_owned();
     }
     oldu
 }

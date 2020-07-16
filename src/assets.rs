@@ -8,13 +8,22 @@ pub struct Asset {
 }
 
 #[derive(Copy, Debug, Clone)]
+pub enum Side {
+    Call = 1,
+    Put = -1
+}
+
+#[derive(Copy, Debug, Clone)]
 pub struct European {
     pub strike: f64,
-    pub sign: f64, // This represents call vs put options
+    pub side: Side // This represents call vs put options
 }
 impl European {
 
     // Functions to extract the two dimensionless parameters of the pricing problem
+    pub fn sign(&self) -> f64 {
+        self.side as i32 as f64
+    }
 
     pub fn dimless_k(&self, underlying:&Asset) -> f64 {
         underlying.rate / (0.5 * sqr(underlying.vol))
@@ -24,7 +33,7 @@ impl European {
 
         let d1: f64 = (self.log_moneyness(price)  + (underlying.rate + 0.5*sqr(underlying.vol))*time_remaining) / (underlying.vol * time_remaining.sqrt());
         let d2: f64 = d1 - (underlying.vol*time_remaining.sqrt());
-        self.sign * (price*dist.cdf(self.sign * d1) - self.strike*(-1. * underlying.rate * time_remaining).exp()*dist.cdf(self.sign * d2))
+        self.sign() * (price*dist.cdf(self.sign() * d1) - self.strike*(-1. * underlying.rate * time_remaining).exp()*dist.cdf(self.sign() * d2))
     }
     pub fn log_moneyness(&self, spot: f64) -> f64 {
         (spot/self.strike).ln()
@@ -34,7 +43,7 @@ impl European {
 pub trait Vanilla {
     // implement this to provide a new type of option with a payoff Function
     // TODO: Figure out what this will mean for path dependence, different exercise times etc
-    fn new(strike: f64, call: bool) -> Self;
+    fn new(strike: f64, side: Side) -> Self;
     fn payoff(&self, spot: f64) -> f64; // Payoff in financial variables
     fn dimless_time(&self, underlying: &Asset, time_remaining: f64) -> f64 {
         0.5 * sqr(underlying.vol) * time_remaining
@@ -55,19 +64,19 @@ pub trait Discretisable {
 }
 impl Vanilla for European {
     fn payoff(&self, spot: f64) -> f64 {
-        (self.sign * (spot - self.strike)).max(0.)
+        (self.sign() * (spot - self.strike)).max(0.)
     }
-    fn new(strike: f64, call: bool) -> European {
+    fn new(strike: f64, side: Side) -> European {
         // Gets around non-obvious code of sign/type
         European {
-            strike: strike,
-            sign: if call {1.} else {-1.},
+            strike,
+            side
         }
     }
 }
 impl Discretisable for European {
     fn boundary_t0(&self, underlying: &Asset, x: f64) -> f64 {
-        (self.sign * (
+        (self.sign() * (
             (0.5 * (self.dimless_k(&underlying) +1.)*x).exp()
             - (0.5 * (self.dimless_k(&underlying) - 1.)*x).exp()
         ))
@@ -75,19 +84,17 @@ impl Discretisable for European {
         }
 
     fn boundary_spatial_p(&self, underlying:&Asset,x: f64, tau: f64) -> f64 {
-        match self.sign {
-            1. => (0.5 * (self.dimless_k(&underlying) + 1.) * x
+        match self.side {
+            Side::Call => (0.5 * (self.dimless_k(&underlying) + 1.) * x
                 + 0.25 * sqr(self.dimless_k(&underlying) + 1.)  * tau).exp(),
-            -1. => 0.,
-            _ => panic!("Invalid option! Sign must be either +-1."),
+            Side::Put => 0.,
             }
         }
     fn boundary_spatial_m(&self, underlying: &Asset, x:f64, tau:f64) -> f64 {
         // Boundary condition at log_moneyness of -inf, or price of 0.
-        match self.sign {
-            1. => 0.,
-            -1. => ((0.25 * sqr(self.dimless_k(&underlying) + 1.) + self.dimless_k(&underlying) )* tau + 0.5 * (self.dimless_k(&underlying) -1.) * x).exp(),
-            _ => panic!("Invalid option! Sign must be either +-1."),
+        match self.side {
+            Side::Call => 0.,
+            Side::Put => ((0.25 * sqr(self.dimless_k(&underlying) + 1.) + self.dimless_k(&underlying) )* tau + 0.5 * (self.dimless_k(&underlying) -1.) * x).exp(),
         }
     }
 
