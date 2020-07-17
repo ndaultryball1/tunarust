@@ -1,17 +1,5 @@
-use statrs::distribution::{Normal, Univariate};
-#[derive(Copy, Debug, Clone)]
-pub struct Asset {
-    // An Asset represents the state of the world at a timestep
-    // Hopefully will allow for models of non-constant vol and interest rate
-    pub vol: f64,
-    pub rate: f64,
-}
-
-#[derive(Copy, Debug, Clone)]
-pub enum Side {
-    Call = 1,
-    Put = -1,
-}
+use super::*;
+use super::utils::sqr;
 
 #[derive(Copy, Debug, Clone)]
 pub struct European {
@@ -28,6 +16,7 @@ impl European {
         underlying.rate / (0.5 * sqr(underlying.vol))
     }
     pub fn exact_solution(&self, underlying: &Asset, price: f64, time_remaining: f64) -> f64 {
+        // Black-Scholes formula for European options
         let dist = Normal::new(0.0, 1.0).unwrap();
 
         let d1: f64 = (self.log_moneyness(price)
@@ -43,28 +32,6 @@ impl European {
     pub fn log_moneyness(&self, spot: f64) -> f64 {
         (spot / self.strike).ln()
     }
-}
-
-pub trait Vanilla {
-    // implement this to provide a new type of option with a payoff Function
-    // TODO: Figure out what this will mean for path dependence, different exercise times etc
-    fn new(strike: f64, side: Side) -> Self;
-    fn payoff(&self, spot: f64) -> f64; // Payoff in financial variables
-    fn dimless_time(&self, underlying: &Asset, time_remaining: f64) -> f64 {
-        0.5 * sqr(underlying.vol) * time_remaining
-    }
-}
-pub trait Discretisable {
-    // Implement this to provide boundary conditions for a finite difference scheme
-    // Ideally this would be linked to the payoff function in some way
-    fn boundary_spatial_p(&self, underlying: &Asset, price: f64, time_remaining: f64) -> f64;
-    fn boundary_spatial_m(&self, underlying: &Asset, price: f64, time_remaining: f64) -> f64;
-    fn boundary_t0(&self, underlying: &Asset, price: f64) -> f64;
-    // Boundary condition in the variables
-    //relevant to the problem i.e heat equation formulation
-    fn u_to_value(&self, underlying: &Asset, u: f64, time_remaining: f64, spot: f64) -> f64;
-    // Implement this to convert from the results of the finite-difference scheme
-    // back to value of the option.
 }
 impl Vanilla for European {
     fn payoff(&self, spot: f64) -> f64 {
@@ -112,7 +79,49 @@ impl Discretisable for European {
         self.strike * exponent.exp() * u
     }
 }
-fn sqr(x: f64) -> f64 {
-    // maybe refactor to a utils file
-    x * x
+
+mod tests {
+    use super::{European, Vanilla, Discretisable, Asset, Side::*};
+
+    #[test]
+    fn exact_put_call_parity() {
+        // Function testing implementation of exact solution obeys put-call parity
+
+        let spot: f64 = 60.;
+        let remaining: f64 = 0.5;
+        let underlying = Asset {
+            vol: 0.2,
+            rate: 0.05,
+        };
+        let strike = 50.;
+        let test_call = European::new(strike, Call);
+        let test_put = European::new(strike, Put);
+
+        let call_price = test_call.exact_solution(&underlying, spot, remaining);
+        let put_price = test_put.exact_solution(&underlying, spot, remaining);
+        let discounted_strike = (-1. * remaining * underlying.rate).exp() * strike;
+
+        assert_eq!(put_price + spot - call_price, discounted_strike);
+    }
+
+    #[test]
+    fn boundaries_t0() {
+        // Test the spatial bcs agree with time bc at tau = 0
+        let test_call = European::new(50., Call);
+        let underlying = Asset {
+            vol: 0.2,
+            rate: 0.05,
+        };
+        let _remaining = 0.5;
+
+        let bm_min = test_call.boundary_spatial_m(&underlying, -10., 0.);
+        let bm_plus = test_call.boundary_spatial_p(&underlying, 10., 0.);
+        let t0_min = test_call.boundary_t0(&underlying, -10.);
+        let t0_plus = test_call.boundary_t0(&underlying, 10.);
+
+        assert_eq!(bm_min, 0.);
+        assert_eq!(t0_min, 0.);
+        statrs::assert_almost_eq!(bm_plus, t0_plus, 0.001 * bm_plus);
+    }
+
 }

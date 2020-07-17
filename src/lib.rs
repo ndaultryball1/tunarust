@@ -1,5 +1,3 @@
 pub mod assets;
-pub mod explicit;
-
-#[cfg(test)]
-mod tests;
+pub mod finite_difference;
+mod utils;

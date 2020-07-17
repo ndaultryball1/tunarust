@@ -1,7 +1,6 @@
-use explicit::price;
 use options_pricing::{
-    assets::{Asset, European, Side, Vanilla},
-    explicit,
+    assets::{Asset, european::European, Side, Vanilla},
+    finite_difference::explicit::price,
 };
 
 fn main() {

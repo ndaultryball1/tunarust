@@ -1,6 +1,6 @@
 // This module implements explicit finite difference methods
 // Plan - generalise to non-european options.
-use crate::assets::{Asset, Discretisable, European, Vanilla};
+use crate::assets::{Asset, Discretisable, european::European, Vanilla};
 
 const DX: f64 = 0.01; // Size of spatial increment
 const M: i32 = 300; // Number of timesteps to divide the interval
@@ -62,7 +62,7 @@ pub fn price(to_price: European, underlying: &Asset, time_remaining: f64, spot: 
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::spot_to_array_loc;
     #[test]
     fn test_spot_to_array_loc() {
         assert_eq!(spot_to_array_loc(0.), 1000)
