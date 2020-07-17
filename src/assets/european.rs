@@ -81,6 +81,7 @@ impl Discretisable for European {
 }
 
 mod tests {
+    #![allow(unused_imports)]
     use super::{Asset, European, Side::*, Vanilla, Discretisable};
 
     #[test]
