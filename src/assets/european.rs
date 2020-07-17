@@ -81,7 +81,7 @@ impl Discretisable for European {
 }
 
 mod tests {
-    use super::{European, Vanilla, Discretisable, Asset, Side::*};
+    use super::{Asset, European, Side::*, Vanilla, Discretisable};
 
     #[test]
     fn exact_put_call_parity() {
