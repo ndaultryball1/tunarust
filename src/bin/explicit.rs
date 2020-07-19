@@ -1,5 +1,5 @@
 use options_pricing::{
-    assets::{Asset, european::European, Side, Vanilla},
+    assets::{european::European, Asset, Side, Vanilla},
     finite_difference::*,
 };
 

@@ -2,8 +2,8 @@
 
 extern crate options_pricing;
 
+use options_pricing::assets::{european::*, Asset, Side, Vanilla};
 use options_pricing::finite_difference::*;
-use options_pricing::assets::{european::*, Vanilla, Asset, Side};
 
 #[test]
 fn explicit_fwd_value() {
@@ -17,7 +17,7 @@ fn explicit_fwd_value() {
     let remaining = 0.5;
     let spot = 70.;
 
-    let params=Params::reasonable_defaults();
+    let params = Params::reasonable_defaults();
 
     let result_call = explicit::price(test_call, &underlying, remaining, spot, &params);
     let result_put = explicit::price(test_put, &underlying, remaining, spot, &params);

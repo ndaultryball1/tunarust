@@ -1,5 +1,5 @@
-use super::*;
 use super::utils::sqr;
+use super::*;
 
 #[derive(Copy, Debug, Clone)]
 pub struct European {
@@ -63,8 +63,8 @@ impl Discretisable for European {
         match self.side {
             Side::Call => 0.,
             Side::Put => (0.5 * (self.dimless_k(&underlying) + 1.) * x
-            + 0.25 * sqr(self.dimless_k(&underlying) + 1.) * tau)
-            .exp(),
+                + 0.25 * sqr(self.dimless_k(&underlying) + 1.) * tau)
+                .exp(),
         }
     }
 
@@ -82,7 +82,7 @@ impl Discretisable for European {
 
 mod tests {
     #![allow(unused_imports)]
-    use super::{Asset, European, Side::*, Vanilla, Discretisable};
+    use super::{Asset, Discretisable, European, Side::*, Vanilla};
 
     #[test]
     fn exact_put_call_parity() {
@@ -124,5 +124,4 @@ mod tests {
         assert_eq!(t0_min, 0.);
         statrs::assert_almost_eq!(bm_plus, t0_plus, 0.001 * bm_plus);
     }
-
 }

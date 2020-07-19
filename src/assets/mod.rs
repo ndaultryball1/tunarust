@@ -16,7 +16,6 @@ pub enum Side {
     Put = -1,
 }
 
-
 pub trait Vanilla {
     // implement this to provide a new type of option with a payoff Function
     // TODO: Figure out what this will mean for path dependence, different exercise times etc
@@ -38,4 +37,3 @@ pub trait Discretisable {
     // Implement this to convert from the results of the finite-difference scheme
     // back to value of the option.
 }
-
