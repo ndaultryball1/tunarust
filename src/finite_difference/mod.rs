@@ -1,8 +1,8 @@
 pub mod explicit;
 pub mod implicit;
 
+use crate::assets::{Asset, Discretisable};
 use crate::utils::sqr;
-use crate::assets::{Discretisable, Asset};
 
 pub struct Params {
     // Unifies parameters for a discretisation, and provides
@@ -44,13 +44,31 @@ impl Params {
     }
 }
 
-pub fn set_boundaries<T: Discretisable>(solution: &mut Vec<f64>, instrument: &T, underlying: &Asset, time: f64, params: &Params) {
+pub fn set_boundary_spatial<T: Discretisable>(
+    solution: &mut Vec<f64>,
+    instrument: &T,
+    underlying: &Asset,
+    time: f64,
+    params: &Params,
+) {
     *solution.first_mut().unwrap() =
-            instrument.boundary_spatial_m(&underlying, params.minus as f64 * params.dx, time);
+        instrument.boundary_spatial_m(&underlying, params.minus as f64 * params.dx, time);
     *solution.last_mut().unwrap() =
         instrument.boundary_spatial_p(&underlying, params.plus as f64 * params.dx, time);
 }
 
+pub fn get_boundary_t0<T: Discretisable>(
+    instrument: &T,
+    underlying: &Asset,
+    params: &Params,
+) -> Vec<f64> {
+    (0..params.numx())
+        .map(|x| {
+            let price = (x + params.minus) as f64 * params.dx;
+            instrument.boundary_t0(underlying, price)
+        })
+        .collect::<Vec<f64>>()
+}
 
 #[cfg(test)]
 mod tests {

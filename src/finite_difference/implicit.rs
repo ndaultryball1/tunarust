@@ -4,7 +4,7 @@ use crate::utils::sqr;
 
 fn lu_find_y(params: &Params) -> Vec<f64> {
     // Find the diagonal elements of the LU decomposition
-    let mut ys = vec![0.; params.numx()  as usize - 2];
+    let mut ys = vec![0.; params.numx() as usize - 2];
     // Ys are used only for internal grid points.
     let mut prev = 0.; // Keep track of previous calculated element of vector
     for (i, loc) in ys.iter_mut().enumerate() {
@@ -20,7 +20,7 @@ fn lu_find_y(params: &Params) -> Vec<f64> {
     ys
 }
 
-fn advance_solution(newu: &mut Vec<f64>, bs: &Vec<f64>, ys: &Vec<f64>, params: &Params){
+fn advance_solution(newu: &mut Vec<f64>, bs: &Vec<f64>, ys: &Vec<f64>, params: &Params) {
     // Take in newu array with spatial bcs set.
 
     let mut qs = vec![0.; params.numx() as usize - 2];
@@ -31,7 +31,7 @@ fn advance_solution(newu: &mut Vec<f64>, bs: &Vec<f64>, ys: &Vec<f64>, params: &
     for (i, loc) in qs.iter_mut().enumerate() {
         y_prev = match i {
             0 => 1.,
-            _ => ys[i-1]
+            _ => ys[i - 1],
         }; // For first step want to set qs[0] = bs[0] so ignore ys here.
         prev = bs[i] + params.alpha() * prev / y_prev;
         *loc = prev;
@@ -39,7 +39,7 @@ fn advance_solution(newu: &mut Vec<f64>, bs: &Vec<f64>, ys: &Vec<f64>, params: &
     prev = 0.;
     for i in (1..params.numx() as usize).rev() {
         prev = (qs[i] + prev * params.alpha()) / ys[i];
-        newu[i] = prev; 
+        newu[i] = prev;
     }
 }
 
@@ -48,25 +48,20 @@ fn lu_solve<T: Discretisable + Vanilla>(
     underlying: &Asset,
     time_remaining: f64,
     params: &Params,
-) -> Vec<f64>{
+) -> Vec<f64> {
     let ys = lu_find_y(&params);
 
     // Set temporal boundary conditions
-    let mut u = (0..params.numx())
-        .map(|x| {
-            let price = (x + params.minus) as f64 * params.dx;
-            to_price.boundary_t0(underlying, price)
-        })
-        .collect::<Vec<f64>>();
-    
+    let mut u: Vec<f64> = super::get_boundary_t0(&to_price, &underlying, &params);
+
     let mut bs: Vec<f64>;
 
     for j in 1..params.numt(to_price.dimless_time(underlying, time_remaining)) {
         let tau = j as f64 * params.dt;
         bs = u.as_slice().to_owned();
 
-        super::set_boundaries(&mut u, &to_price, &underlying, tau, &params);
-        
+        super::set_boundary_spatial(&mut u, &to_price, &underlying, tau, &params);
+
         bs[1] += params.alpha() * *u.first().unwrap();
         bs[params.numx() as usize - 2] += params.alpha() * *u.last().unwrap();
         advance_solution(&mut u, &bs, &ys, &params);

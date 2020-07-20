@@ -32,7 +32,7 @@ pub trait Discretisable {
     fn boundary_spatial_m(&self, underlying: &Asset, price: f64, time_remaining: f64) -> f64;
     fn boundary_t0(&self, underlying: &Asset, price: f64) -> f64;
     // Boundary condition in the variables
-    //relevant to the problem i.e heat equation formulation
+    // relevant to the problem i.e heat equation formulation
     fn u_to_value(&self, underlying: &Asset, u: f64, time_remaining: f64, spot: f64) -> f64;
     // Implement this to convert from the results of the finite-difference scheme
     // back to value of the option.

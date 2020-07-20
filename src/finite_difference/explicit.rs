@@ -32,7 +32,7 @@ fn explicit_fwd<T: Vanilla + Discretisable>(
         let tau = j as f64 * params.dt;
 
         // Set spatial boundary conditions at each timestep
-        super::set_boundaries(&mut newu, &to_price, &underlying, tau, &params);
+        super::set_boundary_spatial(&mut newu, &to_price, &underlying, tau, &params);
 
         // Populate new vector depending on last timestep
         for n in 1..newu.len() - 1 {
