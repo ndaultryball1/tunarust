@@ -21,12 +21,7 @@ fn explicit_fwd<T: Vanilla + Discretisable>(
     let mut newu: Vec<f64> = (0..params.numx()).map(|x| x as f64).collect();
 
     // Set temporal boundary conditions
-    let mut oldu = (0..params.numx())
-        .map(|x| {
-            let price = (x + params.minus) as f64 * params.dx;
-            to_price.boundary_t0(underlying, price)
-        })
-        .collect::<Vec<f64>>();
+    let mut oldu = super::get_boundary_t0(&to_price, &underlying, &params);
 
     for j in 1..params.numt(to_price.dimless_time(underlying, time_remaining)) {
         let tau = j as f64 * params.dt;

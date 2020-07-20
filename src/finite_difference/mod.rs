@@ -14,9 +14,9 @@ pub struct Params {
 }
 
 impl Params {
-    pub fn numx(&self) -> i32 {
+    pub fn numx(&self) -> usize {
         // Number of spatial increments
-        self.plus - self.minus + 1
+        (self.plus - self.minus + 1) as usize
     }
 
     pub fn numt(&self, dimless_time: f64) -> i32 {
@@ -52,9 +52,9 @@ pub fn set_boundary_spatial<T: Discretisable>(
     params: &Params,
 ) {
     *solution.first_mut().unwrap() =
-        instrument.boundary_spatial_m(&underlying, params.minus as f64 * params.dx, time);
+        instrument.boundary_spatial_m(&underlying,  -(params.minus as f64 * params.dx), time);
     *solution.last_mut().unwrap() =
-        instrument.boundary_spatial_p(&underlying, params.plus as f64 * params.dx, time);
+        instrument.boundary_spatial_p(&underlying, -(params.plus as f64 * params.dx), time);
 }
 
 pub fn get_boundary_t0<T: Discretisable>(
@@ -64,7 +64,7 @@ pub fn get_boundary_t0<T: Discretisable>(
 ) -> Vec<f64> {
     (0..params.numx())
         .map(|x| {
-            let price = (x + params.minus) as f64 * params.dx;
+            let price = (x as i32 + params.minus) as f64 * params.dx;
             instrument.boundary_t0(underlying, price)
         })
         .collect::<Vec<f64>>()

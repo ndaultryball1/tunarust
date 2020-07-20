@@ -4,16 +4,13 @@ use crate::utils::sqr;
 
 fn lu_find_y(params: &Params) -> Vec<f64> {
     // Find the diagonal elements of the LU decomposition
-    let mut ys = vec![0.; params.numx() as usize - 2];
+    let mut ys = vec![0.; params.numx()];
+
     // Ys are used only for internal grid points.
-    let mut prev = 0.; // Keep track of previous calculated element of vector
-    for (i, loc) in ys.iter_mut().enumerate() {
-        *loc = match i {
-            0 => 1. + 2. * params.alpha(),
-            _ => 1. + 2. * params.alpha() - sqr(params.alpha()) / prev,
-        };
-        prev = *loc;
-        if prev == 0. {
+    ys[1] = 1. + 2.*params.alpha();
+    for i in 2..params.numx()-1 {
+        ys[i] = 1.+2.*params.alpha() - sqr(params.alpha()) / ys[i - 1];
+        if ys[i] == 0. {
             panic!("Problem is singular - bad luck!")
         };
     }
@@ -23,23 +20,18 @@ fn lu_find_y(params: &Params) -> Vec<f64> {
 fn advance_solution(newu: &mut Vec<f64>, bs: &Vec<f64>, ys: &Vec<f64>, params: &Params) {
     // Take in newu array with spatial bcs set.
 
-    let mut qs = vec![0.; params.numx() as usize - 2];
+    let mut qs = vec![0.; params.numx()];
     // Calculation only for internal points
 
-    let mut prev = 0.; // Want second term to be zero for i = 0
-    let mut y_prev: f64;
-    for (i, loc) in qs.iter_mut().enumerate() {
-        y_prev = match i {
-            0 => 1.,
-            _ => ys[i - 1],
-        }; // For first step want to set qs[0] = bs[0] so ignore ys here.
-        prev = bs[i] + params.alpha() * prev / y_prev;
-        *loc = prev;
+    qs[1] = bs[1];
+
+    for i in 2..params.numx()-1{
+        qs[i] = bs[i] + params.alpha() * qs[i - 1] / ys[i - 1];
     }
-    prev = 0.;
-    for i in (1..params.numx() as usize).rev() {
-        prev = (qs[i] + prev * params.alpha()) / ys[i];
-        newu[i] = prev;
+
+    newu[params.numx() - 2] = qs[params.numx() - 2] / ys[params.numx() - 2];
+    for i in (params.numx() - 3)..=1 {
+        newu[i] = (qs[i] + params.alpha() * newu[i + 1]) / ys[i];
     }
 }
 
@@ -63,7 +55,7 @@ fn lu_solve<T: Discretisable + Vanilla>(
         super::set_boundary_spatial(&mut u, &to_price, &underlying, tau, &params);
 
         bs[1] += params.alpha() * *u.first().unwrap();
-        bs[params.numx() as usize - 2] += params.alpha() * *u.last().unwrap();
+        bs[params.numx() - 2] += params.alpha() * *u.last().unwrap();
         advance_solution(&mut u, &bs, &ys, &params);
     }
     u
