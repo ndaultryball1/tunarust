@@ -9,9 +9,9 @@ I plan to implement finite difference and monte-carlo methods for european optio
 
 Project organisation:
 
-interface - python source code
-options pricing - rust library to implement numerical methods, manipulate assets etc
-pricing_interface - will provide wrappers around functions and objects from "options_pricing" in order to re-export them and provide a clean API.
+interface - python source code <\br>
+options pricing - rust library to implement numerical methods, manipulate assets etc <\br>
+pricing_interface - will provide wrappers around functions and objects from "options_pricing" in order to re-export them and provide a clean API.<\br>
 
 Status:
 
