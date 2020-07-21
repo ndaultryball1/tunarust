@@ -7,9 +7,9 @@ fn lu_find_y(params: &Params) -> Vec<f64> {
     let mut ys = vec![0.; params.numx()];
 
     // Ys are used only for internal grid points.
-    ys[1] = 1. + 2.*params.alpha();
+    ys[1] = 1. + 2. * params.alpha();
     for i in 2..params.numx()-1 {
-        ys[i] = 1.+2.*params.alpha() - sqr(params.alpha()) / ys[i - 1];
+        ys[i] = 1. + 2. * params.alpha() - sqr(params.alpha()) / ys[i - 1];
         if ys[i] == 0. {
             panic!("Problem is singular - bad luck!")
         };
