@@ -24,3 +24,4 @@ class Option(ABC):
         """
         If spot price is not specified, return an array of
         option prices
+        """
